@@ -1,0 +1,57 @@
+---
+- name: Déploiement du site e-commerce
+  hosts: webserver
+  become: true
+
+  tasks:
+  - name: Installation du serveur web Apache
+    apt:
+      name: apache2
+      state: latest
+
+  - name: Configuration du site e-commerce
+    copy:
+      src: /path/to/e-commerce-site
+      dest: /var/www/html/
+      owner: www-data
+      group: www-data
+      mode: '0755'
+
+  - name: Installation de PHP
+    apt:
+      name:
+        - php
+        - libapache2-mod-php
+      state: latest
+
+  - name: Installation de la base de données MySQL
+    apt:
+      name:
+        - mysql-server
+        - mysql-client
+      state: latest
+    become: true
+
+  - name: Configuration de la base de données MySQL
+    mysql_user:
+      name: root
+      password: "{{ mysql_root_password }}"
+      priv: "*.*:ALL,GRANT"
+      host: localhost
+
+  - name: Création de la base de données pour le site e-commerce
+    mysql_db:
+      name: tophardware
+      state: present
+      login_user: root
+      login_password: "{{ mysql_root_password }}"
+
+  - name: Installation de l'extension MySQL pour PHP
+    apt:
+      name: php-mysql
+      state: latest
+
+  - name: Redémarrage du serveur Apache
+    service:
+      name: apache2
+      state: restarted
